@@ -37,7 +37,7 @@ export default function DashboardScreen() {
       {/* Quick Action Cards */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
       <View style={styles.actionsGrid}>
-        <Pressable style={styles.actionCard} onPress={() => navigateTo('/(tabs)/new-survey')}>
+        <Pressable style={styles.actionCard} onPress={() => navigateTo('/new-survey')}>
           <View style={[styles.iconBox, { backgroundColor: '#E0E7FF' }]}>
             <MaterialIcons name="add-task" size={24} color="#4F46E5" />
           </View>
