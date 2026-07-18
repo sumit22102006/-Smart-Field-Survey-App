@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform, Linking, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import MapView, { Marker } from 'react-native-maps';
 
 export default function LocationScreen() {
   const router = useRouter();
@@ -59,15 +60,39 @@ export default function LocationScreen() {
       </View>
 
       <View style={styles.content}>
-        <View style={styles.mapIllustrationContainer}>
-          <View style={styles.mapCircle}>
-            <FontAwesome5 name="map-marker-alt" size={48} color="#EF4444" />
+        {!location ? (
+          <>
+            <View style={styles.mapIllustrationContainer}>
+              <View style={styles.mapCircle}>
+                <FontAwesome5 name="map-marker-alt" size={48} color="#EF4444" />
+              </View>
+            </View>
+            <Text style={styles.description}>
+              Fetch the exact GPS coordinates for this survey site to ensure accurate tracking and reporting.
+            </Text>
+          </>
+        ) : (
+          <View style={styles.mapContainer}>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+            >
+              <Marker
+                coordinate={{
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                }}
+                title="Survey Site"
+                description="Current Location"
+              />
+            </MapView>
           </View>
-        </View>
-
-        <Text style={styles.description}>
-          Fetch the exact GPS coordinates for this survey site to ensure accurate tracking and reporting.
-        </Text>
+        )}
 
         {errorMsg ? (
           <View style={styles.errorContainer}>
@@ -87,15 +112,6 @@ export default function LocationScreen() {
               <Text style={styles.locationLabel}>Longitude:</Text>
               <Text style={styles.locationValue}>{location.coords.longitude.toFixed(6)}°</Text>
             </View>
-            {location.coords.accuracy && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.locationRow}>
-                  <Text style={styles.locationLabel}>Accuracy:</Text>
-                  <Text style={styles.locationValue}>±{location.coords.accuracy.toFixed(1)} meters</Text>
-                </View>
-              </>
-            )}
           </View>
         )}
 
@@ -120,7 +136,7 @@ export default function LocationScreen() {
           {location && (
             <Pressable style={styles.secondaryButton} onPress={openInMaps}>
               <FontAwesome5 name="map" size={18} color="#4F46E5" style={styles.buttonIcon} />
-              <Text style={styles.secondaryButtonText}>Open in Maps</Text>
+              <Text style={styles.secondaryButtonText}>Open in Google/Apple Maps</Text>
             </Pressable>
           )}
         </View>
@@ -143,6 +159,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
+    zIndex: 10,
   },
   backButton: {
     padding: 4,
@@ -182,6 +199,19 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 24,
   },
+  mapContainer: {
+    width: Dimensions.get('window').width - 48,
+    height: 250,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -203,7 +233,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 32,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -265,6 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF',
     paddingVertical: 16,
     borderRadius: 12,
+    marginBottom:10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
