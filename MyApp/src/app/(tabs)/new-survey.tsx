@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { addSurvey } from '../../utils/storage';
 
 export default function NewSurveyScreen() {
   const router = useRouter();
@@ -24,26 +25,38 @@ export default function NewSurveyScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      Alert.alert(
-        'Success',
-        'Survey created successfully!',
-        [
-          { 
-            text: 'OK', 
-            onPress: () => {
-              // Reset form
-              setSiteName('');
-              setClientName('');
-              setDescription('');
-              setPriority('');
-              setErrors({});
-              router.push('/(tabs)');
-            } 
-          }
-        ]
-      );
+      const success = await addSurvey({
+        site: siteName,
+        clientName: clientName,
+        description: description,
+        priority: priority,
+        date: date,
+      });
+
+      if (success) {
+        Alert.alert(
+          'Success',
+          'Survey created successfully!',
+          [
+            { 
+              text: 'OK', 
+              onPress: () => {
+                // Reset form
+                setSiteName('');
+                setClientName('');
+                setDescription('');
+                setPriority('');
+                setErrors({});
+                router.push('/(tabs)/history');
+              } 
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to save the survey. Please try again.');
+      }
     } else {
       Alert.alert('Validation Error', 'Please fill in all required fields.');
     }

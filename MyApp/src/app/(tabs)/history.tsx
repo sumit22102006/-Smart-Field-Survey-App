@@ -1,26 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Platform, TextInput } from 'react-native';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
-// Mock Data
-const MOCK_HISTORY = [
-  { id: 'SRV-8942', site: 'Downtown Commercial Plaza', date: '2026-07-18', status: 'Completed', priority: 'High' },
-  { id: 'SRV-8941', site: 'Westside Residential Complex', date: '2026-07-16', status: 'Completed', priority: 'Medium' },
-  { id: 'SRV-8940', site: 'North Park Substation', date: '2026-07-15', status: 'Pending Review', priority: 'High' },
-  { id: 'SRV-8939', site: 'East River Bridge', date: '2026-07-12', status: 'Completed', priority: 'Low' },
-  { id: 'SRV-8938', site: 'Central Station Terminal', date: '2026-07-10', status: 'Draft', priority: 'Medium' },
-  { id: 'SRV-8937', site: 'Harbor Warehouse Facility', date: '2026-07-08', status: 'Completed', priority: 'High' },
-];
+import { useRouter, useFocusEffect } from 'expo-router';
+import { getSurveys, Survey } from '../../utils/storage';
 
 export default function HistoryScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSurveys();
+    }, [])
+  );
+
+  const loadSurveys = async () => {
+    const data = await getSurveys();
+    setSurveys(data);
+  };
 
   const filters = ['All', 'Completed', 'Pending Review', 'Draft'];
 
-  const filteredHistory = MOCK_HISTORY.filter(item => {
+  const filteredHistory = surveys.filter(item => {
     const matchesSearch = item.site.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           item.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = activeFilter === 'All' || item.status === activeFilter;
@@ -36,7 +39,7 @@ export default function HistoryScreen() {
     }
   };
 
-  const renderHistoryItem = ({ item }: { item: typeof MOCK_HISTORY[0] }) => (
+  const renderHistoryItem = ({ item }: { item: Survey }) => (
     <Pressable style={styles.card} onPress={() => router.push('/survey')}>
       <View style={styles.cardHeader}>
         <Text style={styles.surveyId}>{item.id}</Text>

@@ -3,23 +3,33 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-nati
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSurveys, Survey } from '../../utils/storage';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [recentSurveys, setRecentSurveys] = useState<Survey[]>([]);
+  const [todaysCount, setTodaysCount] = useState(0);
 
-  const loadProfileImage = async () => {
+  const loadData = async () => {
     try {
       const savedImage = await AsyncStorage.getItem('profileImage');
       if (savedImage) setProfileImage(savedImage);
+      
+      const allSurveys = await getSurveys();
+      setRecentSurveys(allSurveys.slice(0, 3));
+      
+      const today = new Date().toISOString().split('T')[0];
+      const todaySurveys = allSurveys.filter(s => s.date === today);
+      setTodaysCount(todaySurveys.length);
     } catch (e) {
-      console.log('Error loading image', e);
+      console.log('Error loading data', e);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      loadProfileImage();
+      loadData();
     }, [])
   );
 
@@ -48,7 +58,7 @@ export default function DashboardScreen() {
       <View style={styles.statsCard}>
         <View style={styles.statInfo}>
           <Text style={styles.statLabel}>Today's Surveys</Text>
-          <Text style={styles.statValue}>12</Text>
+          <Text style={styles.statValue}>{todaysCount}</Text>
         </View>
         <View style={styles.statIconContainer}>
           <FontAwesome name="check-circle" size={32} color="#10B981" />
@@ -90,18 +100,22 @@ export default function DashboardScreen() {
       {/* Recent Survey Summary */}
       <Text style={styles.sectionTitle}>Recent Surveys</Text>
       <View style={styles.recentList}>
-        {[1, 2, 3].map((item) => (
-          <View key={item} style={styles.recentItem}>
+        {recentSurveys.length > 0 ? recentSurveys.map((item) => (
+          <View key={item.id} style={styles.recentItem}>
             <View style={styles.recentIcon}>
               <MaterialIcons name="assignment" size={20} color="#6B7280" />
             </View>
             <View style={styles.recentDetails}>
-              <Text style={styles.recentTitle}>Site Inspection #{item}</Text>
-              <Text style={styles.recentSubtitle}>Client: Acme Corp</Text>
+              <Text style={styles.recentTitle}>{item.id}</Text>
+              <Text style={styles.recentSubtitle}>Client: {item.clientName}</Text>
             </View>
-            <Text style={styles.recentDate}>Today</Text>
+            <Text style={styles.recentDate}>{item.date}</Text>
           </View>
-        ))}
+        )) : (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Text style={{ color: '#6B7280' }}>No recent surveys.</Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );
