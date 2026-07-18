@@ -1,9 +1,27 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome, MaterialIcons, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  const loadProfileImage = async () => {
+    try {
+      const savedImage = await AsyncStorage.getItem('profileImage');
+      if (savedImage) setProfileImage(savedImage);
+    } catch (e) {
+      console.log('Error loading image', e);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileImage();
+    }, [])
+  );
 
   const navigateTo = (route: any) => {
     router.push(route);
@@ -18,9 +36,12 @@ export default function DashboardScreen() {
           <Text style={styles.studentName}>Sumit Kumar</Text>
           <Text style={styles.studentDetails}>ID: SFS-2026 • Computer Science</Text>
         </View>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>SK</Text>
-        </View>
+        <Pressable onPress={() => navigateTo('/(tabs)/profile')} style={styles.avatarContainer}>
+          <Image 
+            source={profileImage ? { uri: profileImage } : require('../../../assets/images/profile.jpg')} 
+            style={styles.avatarImage} 
+          />
+        </Pressable>
       </View>
 
       {/* Today's Survey Count */}
@@ -123,7 +144,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#4F46E5',
@@ -132,10 +153,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   statsCard: {
     backgroundColor: '#FFFFFF',

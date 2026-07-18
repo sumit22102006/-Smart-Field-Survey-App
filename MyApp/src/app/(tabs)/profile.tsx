@@ -1,13 +1,52 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Pressable, ScrollView, Platform } from 'react-native';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  const loadProfileImage = async () => {
+    try {
+      const savedImage = await AsyncStorage.getItem('profileImage');
+      if (savedImage) setProfileImage(savedImage);
+    } catch (e) {
+      console.log('Error loading image', e);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileImage();
+    }, [])
+  );
 
   const handleLogout = () => {
     alert("Logged out successfully");
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0].uri) {
+      const uri = result.assets[0].uri;
+      setProfileImage(uri);
+      await AsyncStorage.setItem('profileImage', uri);
+    }
   };
 
   return (
@@ -17,9 +56,15 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.profileSection}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarInitials}>SK</Text>
-        </View>
+        <Pressable onPress={pickImage} style={styles.avatarContainer}>
+          <Image 
+            source={profileImage ? { uri: profileImage } : require('../../../assets/images/profile.jpg')} 
+            style={styles.avatarImage} 
+          />
+          <View style={styles.editIconContainer}>
+            <MaterialIcons name="edit" size={16} color="#FFFFFF" />
+          </View>
+        </Pressable>
         <Text style={styles.userName}>Sumit Kumar</Text>
         <Text style={styles.userRole}>Lead Field Inspector</Text>
         <View style={styles.badgeContainer}>
@@ -129,13 +174,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    borderWidth: 4,
-    borderColor: '#C7D2FE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  avatarInitials: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#4F46E5',
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  editIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#4F46E5',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
   userName: {
     fontSize: 24,
